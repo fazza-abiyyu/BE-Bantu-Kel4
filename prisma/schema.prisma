@@ -9,6 +9,47 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  FREELANCER
+}
+
+model Perusahaan {
+  id                Int      @id @default(autoincrement())
+  email             String   @unique
+  password          String
+  nama_perusahaan   String
+  gambar_perusahaan String
+  alamat            String?
+  no_telepon        String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+}
+
+model User {
+  id          Int          @id @default(autoincrement())
+  email       String       @unique
+  password    String?
+  role        Role         @default(USER)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+  UserProfile UserProfile?
+}
+
+model UserProfile {
+  id             Int      @id @default(autoincrement())
+  profilePicture String?
+  fullName       String
+  phoneNumber    String?  @unique
+  city           String?
+  country        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  userId         Int      @unique
+  user           User     @relation(fields: [userId], references: [id])
 }
