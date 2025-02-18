@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,59 +7,66 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  USER
-  ADMIN
-  FREELANCER
+model log {
+  id          Int        @id @unique(map: "Log_id_key") @default(autoincrement())
+  user_id     Int
+  action      log_action
+  description String
+  create_at   DateTime   @default(now())
+  user        user       @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "Log_user_id_fkey")
+
+  @@index([user_id], map: "Log_user_id_fkey")
 }
 
-model Perusahaan {
+model perusahaan {
   id                Int      @id @default(autoincrement())
-  email             String   @unique
+  email             String   @unique(map: "Perusahaan_email_key")
   password          String
   nama_perusahaan   String
   gambar_perusahaan String
   alamat            String?
   no_telepon        String?
   created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  updated_at        DateTime
 }
 
-model User {
-  id          Int          @id @default(autoincrement())
-  email       String       @unique
-  password    String?
-  role        Role         @default(USER)
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
-  user_profile UserProfile[]
-  refresh_token RefreshToken[]
-  log Log[]
+model refreshtoken {
+  id            Int      @id @unique(map: "RefreshToken_id_key") @default(autoincrement())
+  user_id       Int
+  refresh_token String   @unique(map: "RefreshToken_refresh_token_key")
+  create_at     DateTime @default(now())
+  update_at     DateTime
+  user          user     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "RefreshToken_user_id_fkey")
+
+  @@index([user_id], map: "RefreshToken_user_id_fkey")
 }
 
-model UserProfile {
-  id             Int      @id @default(autoincrement())
+model user {
+  id           Int            @id @default(autoincrement())
+  email        String         @unique(map: "User_email_key")
+  password     String?
+  role         user_role      @default(USER)
+  created_at   DateTime       @default(now())
+  updated_at   DateTime
+  log          log[]
+  refreshtoken refreshtoken[]
+  userprofile  userprofile?
+}
+
+model userprofile {
+  id              Int      @id @default(autoincrement())
   profile_picture String?
   full_name       String
-  phone_number    String?  @unique
-  city           String?
-  country        String?
+  phone_number    String?  @unique(map: "UserProfile_phone_number_key")
+  city            String?
+  country         String?
   created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  user_id         Int      @unique
-  user           User     @relation(fields: [user_id], references: [id])
+  updated_at      DateTime
+  user_id         Int      @unique(map: "UserProfile_user_id_key")
+  user            user     @relation(fields: [user_id], references: [id], map: "UserProfile_user_id_fkey")
 }
 
-model Log {
-  id          Int      @id @unique @default(autoincrement())
-  user_id     Int
-  action      Action
-  description String
-  create_at   DateTime @default(now())
-  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-}
-
-enum Action {
+enum log_action {
   LOGOUT
   LOGIN
   CREATE
@@ -73,11 +74,8 @@ enum Action {
   DELETE
 }
 
-model RefreshToken {
-  id            Int      @id @unique @default(autoincrement())
-  user_id       Int
-  refresh_token String
-  create_at     DateTime @default(now())
-  update_at     DateTime @updatedAt
-  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+enum user_role {
+  USER
+  ADMIN
+  FREELANCER
 }
