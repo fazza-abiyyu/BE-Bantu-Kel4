@@ -20,15 +20,36 @@ enum Role {
 }
 
 model Perusahaan {
-  id                Int      @id @default(autoincrement())
-  email             String   @unique
+  id                Int        @id @default(autoincrement())
+  email             String     @unique
   password          String
   nama_perusahaan   String
   gambar_perusahaan String
   alamat            String?
   no_telepon        String?
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
+  lowongan          Lowongan[]
+}
+
+model Lowongan {
+  id           Int         @id @default(autoincrement())
+  judul        String
+  deskripsi    String
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+  Perusahaan   Perusahaan? @relation(fields: [perusahaanId], references: [id])
+  perusahaanId Int?
+  lamaran      Lamaran[]
+}
+
+model Lamaran {
+  id Int @id @default(autoincrement())
+
+  User       User?     @relation(fields: [userId], references: [id])
+  userId     Int?
+  Lowongan   Lowongan? @relation(fields: [lowonganId], references: [id])
+  lowonganId Int?
 }
 
 model User {
@@ -39,6 +60,8 @@ model User {
   created_at  DateTime     @default(now())
   updated_at  DateTime     @updatedAt
   UserProfile UserProfile?
+  Freelancer  Freelancer?
+  lamaran     Lamaran[]
 }
 
 model UserProfile {
@@ -52,4 +75,73 @@ model UserProfile {
   updatedAt      DateTime @updatedAt
   userId         Int      @unique
   user           User     @relation(fields: [userId], references: [id])
+}
+
+model Freelancer {
+  id         Int               @id @default(autoincrement())
+  deskripsi  String            @db.LongText
+  harga_jasa Float?
+  user       User              @relation(fields: [userId], references: [id])
+  userId     Int               @unique
+  portofolio Portofolio[]
+  skills     FreelancerSkill[]
+  jasa       FreelancerJasa[]
+}
+
+model Portofolio {
+  id           Int                @id @default(autoincrement())
+  judul        String
+  deskripsi    String?
+  freelancer   Freelancer         @relation(fields: [freelancerId], references: [id])
+  freelancerId Int
+  gambar       PortofolioGambar[]
+  created_at   DateTime           @default(now())
+}
+
+model PortofolioGambar {
+  id           Int         @id @default(autoincrement())
+  url          String
+  Portofolio   Portofolio? @relation(fields: [portofolioId], references: [id])
+  portofolioId Int?
+}
+
+model FreelancerSkill {
+  id           Int         @id @default(autoincrement())
+  Freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
+  freelancerId Int?
+  Skill        Skill?      @relation(fields: [skillId], references: [id])
+  skillId      Int?
+
+  @@unique([freelancerId, skillId])
+}
+
+model Skill {
+  id          Int               @id @default(autoincrement())
+  nama        String            @unique
+  freelancers FreelancerSkill[]
+}
+
+model Bidang {
+  id   Int    @id @default(autoincrement())
+  nama String @unique
+  jasa Jasa[]
+}
+
+model Jasa {
+  id         Int              @id @default(autoincrement())
+  nama       String           @unique
+  deskripsi  String?
+  harga_min  Float? // Harga minimum yang direkomendasikan
+  harga_max  Float?
+  bidang     Bidang?          @relation(fields: [bidangId], references: [id])
+  bidangId   Int?
+  freelancer FreelancerJasa[]
+}
+
+model FreelancerJasa {
+  id           Int         @id @default(autoincrement())
+  Jasa         Jasa?       @relation(fields: [jasaId], references: [id])
+  jasaId       Int?
+  Freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
+  freelancerId Int?
 }
