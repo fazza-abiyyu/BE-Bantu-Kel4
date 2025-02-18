@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,66 +13,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model log {
-  id          Int        @id @unique(map: "Log_id_key") @default(autoincrement())
-  user_id     Int
-  action      log_action
-  description String
-  create_at   DateTime   @default(now())
-  user        user       @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "Log_user_id_fkey")
-
-  @@index([user_id], map: "Log_user_id_fkey")
+enum Role {
+  USER
+  ADMIN
+  FREELANCER
 }
 
-model perusahaan {
-  id                Int      @id @default(autoincrement())
-  email             String   @unique(map: "Perusahaan_email_key")
-  password          String
-  nama_perusahaan   String
-  gambar_perusahaan String
-  alamat            String?
-  no_telepon        String?
-  created_at        DateTime @default(now())
-  updated_at        DateTime
+enum PesananStatus {
+  pending
+  completed
+  canceled
 }
 
-model refreshtoken {
-  id            Int      @id @unique(map: "RefreshToken_id_key") @default(autoincrement())
-  user_id       Int
-  refresh_token String   @unique(map: "RefreshToken_refresh_token_key")
-  create_at     DateTime @default(now())
-  update_at     DateTime
-  user          user     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "RefreshToken_user_id_fkey")
-
-  @@index([user_id], map: "RefreshToken_user_id_fkey")
-}
-
-model user {
-  id           Int            @id @default(autoincrement())
-  email        String         @unique(map: "User_email_key")
-  password     String?
-  role         user_role      @default(USER)
-  created_at   DateTime       @default(now())
-  updated_at   DateTime
-  log          log[]
-  refreshtoken refreshtoken[]
-  userprofile  userprofile?
-}
-
-model userprofile {
-  id              Int      @id @default(autoincrement())
-  profile_picture String?
-  full_name       String
-  phone_number    String?  @unique(map: "UserProfile_phone_number_key")
-  city            String?
-  country         String?
-  created_at      DateTime @default(now())
-  updated_at      DateTime
-  user_id         Int      @unique(map: "UserProfile_user_id_key")
-  user            user     @relation(fields: [user_id], references: [id], map: "UserProfile_user_id_fkey")
-}
-
-enum log_action {
+enum Action {
   LOGOUT
   LOGIN
   CREATE
@@ -74,8 +33,171 @@ enum log_action {
   DELETE
 }
 
-enum user_role {
-  USER
-  ADMIN
-  FREELANCER
+enum LowonganStatus {
+  open
+  closed
+}
+
+enum LamaranStatus {
+  pending
+  diterima
+  ditolak
+}
+
+model Perusahaan {
+  id                Int      @id @default(autoincrement())
+  email             String   @unique
+  password          String
+  nama_perusahaan   String
+  gambar_perusahaan String
+  alamat            String?
+  no_telepon        String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  password      String?
+  role          Role           @default(USER)
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
+  user_profile  UserProfile?
+  refresh_token RefreshToken[]
+  log           Log[]
+  freelancer    Freelancer?
+  lamaran       Lamaran[]
+  pesanan       Pesanan[]
+}
+
+model UserProfile {
+  id              Int      @id @default(autoincrement())
+  profile_picture String?
+  full_name       String
+  phone_number    String?  @unique
+  city            String?
+  country         String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  user_id         Int      @unique
+  user            User     @relation(fields: [user_id], references: [id])
+}
+
+model Log {
+  id          Int      @id @unique @default(autoincrement())
+  user_id     Int
+  action      Action
+  description String
+  create_at   DateTime @default(now())
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model RefreshToken {
+  id            Int      @id @unique @default(autoincrement())
+  user_id       Int
+  refresh_token String
+  create_at     DateTime @default(now())
+  update_at     DateTime @updatedAt
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Freelancer {
+  id         Int               @id @default(autoincrement())
+  deskripsi  String            @db.LongText
+  harga_jasa Float?
+  user       User              @relation(fields: [userId], references: [id])
+  userId     Int               @unique
+  portofolio Portofolio[]
+  skills     FreelancerSkill[]
+  jasa       FreelancerJasa[]
+  pesanan    Pesanan[]
+}
+
+model Portofolio {
+  id           Int                @id @default(autoincrement())
+  judul        String
+  deskripsi    String?
+  freelancer   Freelancer         @relation(fields: [freelancerId], references: [id])
+  freelancerId Int
+  gambar       PortofolioGambar[]
+  created_at   DateTime           @default(now())
+}
+
+model PortofolioGambar {
+  id           Int         @id @default(autoincrement())
+  url          String
+  Portofolio   Portofolio? @relation(fields: [portofolioId], references: [id])
+  portofolioId Int?
+}
+
+model FreelancerSkill {
+  id           Int         @id @default(autoincrement())
+  freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
+  freelancerId Int?
+  skill        Skill?      @relation(fields: [skillId], references: [id])
+  skillId      Int?
+}
+
+model Skill {
+  id          Int               @id @default(autoincrement())
+  nama        String            @unique
+  freelancers FreelancerSkill[]
+}
+
+model Bidang {
+  id   Int    @id @default(autoincrement())
+  nama String @unique
+  jasa Jasa[]
+}
+
+model Jasa {
+  id         Int              @id @default(autoincrement())
+  nama       String           @unique
+  deskripsi  String?
+  harga_min  Float? // Harga minimum yang direkomendasikan
+  harga_max  Float?
+  bidang     Bidang?          @relation(fields: [bidangId], references: [id])
+  bidangId   Int?
+  freelancer FreelancerJasa[]
+}
+
+model FreelancerJasa {
+  id           Int         @id @default(autoincrement())
+  Jasa         Jasa?       @relation(fields: [jasaId], references: [id])
+  jasaId       Int?
+  Freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
+  freelancerId Int?
+}
+
+model Lowongan {
+  id         Int            @id @default(autoincrement())
+  judul      String
+  deskripsi  String?
+  status     LowonganStatus @default(open)
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
+  lamaran    Lamaran[]
+}
+
+model Lamaran {
+  id         Int           @id @default(autoincrement())
+  status     LamaranStatus @default(pending)
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+  lowongan   Lowongan?     @relation(fields: [lowonganId], references: [id])
+  lowonganId Int?
+  User       User?         @relation(fields: [userId], references: [id])
+  userId     Int?
+}
+
+model Pesanan {
+  id           Int           @id @default(autoincrement())
+  status       PesananStatus @default(pending)
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id])
+  userId       Int
+  freelancer   Freelancer    @relation(fields: [freelancerId], references: [id])
+  freelancerId Int
 }
