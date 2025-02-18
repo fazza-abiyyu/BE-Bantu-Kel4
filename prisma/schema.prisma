@@ -38,18 +38,46 @@ model User {
   role        Role         @default(USER)
   created_at  DateTime     @default(now())
   updated_at  DateTime     @updatedAt
-  UserProfile UserProfile?
+  user_profile UserProfile[]
+  refresh_token RefreshToken[]
+  log Log[]
 }
 
 model UserProfile {
   id             Int      @id @default(autoincrement())
-  profilePicture String?
-  fullName       String
-  phoneNumber    String?  @unique
+  profile_picture String?
+  full_name       String
+  phone_number    String?  @unique
   city           String?
   country        String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  userId         Int      @unique
-  user           User     @relation(fields: [userId], references: [id])
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  user_id         Int      @unique
+  user           User     @relation(fields: [user_id], references: [id])
+}
+
+model Log {
+  id          Int      @id @unique @default(autoincrement())
+  user_id     Int
+  action      Action
+  description String
+  create_at   DateTime @default(now())
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+enum Action {
+  LOGOUT
+  LOGIN
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model RefreshToken {
+  id            Int      @id @unique @default(autoincrement())
+  user_id       Int
+  refresh_token String
+  create_at     DateTime @default(now())
+  update_at     DateTime @updatedAt
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
