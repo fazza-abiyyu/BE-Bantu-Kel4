@@ -19,6 +19,31 @@ enum Role {
   FREELANCER
 }
 
+enum PesananStatus {
+  pending
+  completed
+  canceled
+}
+
+enum Action {
+  LOGOUT
+  LOGIN
+  CREATE
+  UPDATE
+  DELETE
+}
+
+enum LowonganStatus {
+  open
+  closed
+}
+
+enum LamaranStatus {
+  pending
+  diterima
+  ditolak
+}
+
 model Perusahaan {
   id                Int      @id @default(autoincrement())
   email             String   @unique
@@ -38,10 +63,12 @@ model User {
   role          Role           @default(USER)
   created_at    DateTime       @default(now())
   updated_at    DateTime       @updatedAt
-  user_profile  UserProfile[]
+  user_profile  UserProfile?
   refresh_token RefreshToken[]
   log           Log[]
   freelancer    Freelancer?
+  lamaran       Lamaran[]
+  pesanan       Pesanan[]
 }
 
 model UserProfile {
@@ -66,14 +93,6 @@ model Log {
   user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-enum Action {
-  LOGOUT
-  LOGIN
-  CREATE
-  UPDATE
-  DELETE
-}
-
 model RefreshToken {
   id            Int      @id @unique @default(autoincrement())
   user_id       Int
@@ -92,6 +111,7 @@ model Freelancer {
   portofolio Portofolio[]
   skills     FreelancerSkill[]
   jasa       FreelancerJasa[]
+  pesanan    Pesanan[]
 }
 
 model Portofolio {
@@ -113,12 +133,10 @@ model PortofolioGambar {
 
 model FreelancerSkill {
   id           Int         @id @default(autoincrement())
-  Freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
+  freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
   freelancerId Int?
-  Skill        Skill?      @relation(fields: [skillId], references: [id])
+  skill        Skill?      @relation(fields: [skillId], references: [id])
   skillId      Int?
-
-  @@unique([freelancerId, skillId])
 }
 
 model Skill {
@@ -150,4 +168,36 @@ model FreelancerJasa {
   jasaId       Int?
   Freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
   freelancerId Int?
+}
+
+model Lowongan {
+  id         Int            @id @default(autoincrement())
+  judul      String
+  deskripsi  String?
+  status     LowonganStatus @default(open)
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
+  lamaran    Lamaran[]
+}
+
+model Lamaran {
+  id         Int           @id @default(autoincrement())
+  status     LamaranStatus @default(pending)
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+  lowongan   Lowongan?     @relation(fields: [lowonganId], references: [id])
+  lowonganId Int?
+  User       User?         @relation(fields: [userId], references: [id])
+  userId     Int?
+}
+
+model Pesanan {
+  id           Int           @id @default(autoincrement())
+  status       PesananStatus @default(pending)
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id])
+  userId       Int
+  freelancer   Freelancer    @relation(fields: [freelancerId], references: [id])
+  freelancerId Int
 }
