@@ -45,15 +45,16 @@ enum LamaranStatus {
 }
 
 model Perusahaan {
-  id                Int      @id @default(autoincrement())
-  email             String   @unique
+  id                Int        @id @default(autoincrement())
+  email             String     @unique
   password          String
   nama_perusahaan   String
   gambar_perusahaan String
   alamat            String?
   no_telepon        String?
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
+  lowongan          Lowongan[]
 }
 
 model User {
@@ -171,13 +172,15 @@ model FreelancerJasa {
 }
 
 model Lowongan {
-  id         Int            @id @default(autoincrement())
-  judul      String
-  deskripsi  String?
-  status     LowonganStatus @default(open)
-  created_at DateTime       @default(now())
-  updated_at DateTime       @updatedAt
-  lamaran    Lamaran[]
+  id           Int            @id @default(autoincrement())
+  judul        String
+  deskripsi    String?
+  status       LowonganStatus @default(open)
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+  lamaran      Lamaran[]
+  perusahaan   Perusahaan?    @relation(fields: [perusahaanId], references: [id])
+  perusahaanId Int?
 }
 
 model Lamaran {

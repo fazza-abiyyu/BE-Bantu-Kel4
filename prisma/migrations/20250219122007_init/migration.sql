@@ -1,17 +1,18 @@
-/*
-  Warnings:
+-- CreateTable
+CREATE TABLE `Perusahaan` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `email` VARCHAR(191) NOT NULL,
+    `password` VARCHAR(191) NOT NULL,
+    `nama_perusahaan` VARCHAR(191) NOT NULL,
+    `gambar_perusahaan` VARCHAR(191) NOT NULL,
+    `alamat` VARCHAR(191) NULL,
+    `no_telepon` VARCHAR(191) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
 
-  - You are about to drop the column `password_hash` on the `perusahaan` table. All the data in the column will be lost.
-  - You are about to drop the column `picture_perusahaan` on the `perusahaan` table. All the data in the column will be lost.
-  - Added the required column `gambar_perusahaan` to the `Perusahaan` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `password` to the `Perusahaan` table without a default value. This is not possible if the table is not empty.
-
-*/
--- AlterTable
-ALTER TABLE `perusahaan` DROP COLUMN `password_hash`,
-    DROP COLUMN `picture_perusahaan`,
-    ADD COLUMN `gambar_perusahaan` VARCHAR(191) NOT NULL,
-    ADD COLUMN `password` VARCHAR(191) NOT NULL;
+    UNIQUE INDEX `Perusahaan_email_key`(`email`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `User` (
@@ -155,6 +156,7 @@ CREATE TABLE `Lowongan` (
     `status` ENUM('open', 'closed') NOT NULL DEFAULT 'open',
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
+    `perusahaanId` INTEGER NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -215,6 +217,9 @@ ALTER TABLE `FreelancerJasa` ADD CONSTRAINT `FreelancerJasa_jasaId_fkey` FOREIGN
 
 -- AddForeignKey
 ALTER TABLE `FreelancerJasa` ADD CONSTRAINT `FreelancerJasa_freelancerId_fkey` FOREIGN KEY (`freelancerId`) REFERENCES `Freelancer`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Lowongan` ADD CONSTRAINT `Lowongan_perusahaanId_fkey` FOREIGN KEY (`perusahaanId`) REFERENCES `Perusahaan`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Lamaran` ADD CONSTRAINT `Lamaran_lowonganId_fkey` FOREIGN KEY (`lowonganId`) REFERENCES `Lowongan`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
