@@ -1,6 +1,8 @@
 const path = require("path");
+const bcrypt = require("bcrypt");
 const imagekit = require("../libs/imagekit");
 const prisma = require("../config/prisma");
+const JwtService = require("../utils/jwt.service");
 const { CustomError } = require("../utils/errorHandler");
 
 exports.registerPerusahaan = async (req, res, next) => {
@@ -25,6 +27,7 @@ exports.registerPerusahaan = async (req, res, next) => {
     if (!emailValidator.test(email))
       throw new CustomError(400, "Invalid email Format");
 
+    const hashedPassword = await bcrypt.hash(password, 10);
     // Handle File Upload
     if (file) {
       const strFile = file.buffer.toString("base64");
@@ -39,7 +42,7 @@ exports.registerPerusahaan = async (req, res, next) => {
     let newCompany = await prisma.perusahaan.create({
       data: {
         email,
-        password,
+        password: hashedPassword,
         nama_perusahaan,
         gambar_perusahaan: imageURL,
       },
@@ -48,7 +51,49 @@ exports.registerPerusahaan = async (req, res, next) => {
     res.status(201).json({
       status: true,
       message: "Registration Company successful",
-      data: { newCompany },
+      data: newCompany,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.loginPerusahaan = async (req, res, next) => {
+  try {
+    let { email, password } = req.body;
+    if (!email || !password)
+      throw new CustomError(400, "All fields are required.");
+
+    const company = await prisma.perusahaan.findUnique({
+      where: {
+        email,
+      },
+    });
+    if (!company) {
+      throw new CustomError(404, "Company Not Found");
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, company.password);
+
+    if (!isPasswordValid) {
+      throw new CustomError(404, "Email or Password Not Valid");
+    }
+    const tokens = JwtService.generateToken({ companyId: company.id });
+    res.cookie("access_token", tokens.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    const response = {
+      email: company.email,
+      company: company.nama_perusahaan,
+      accessToken: tokens.accessToken,
+    };
+
+    return res.status(200).json({
+      status: true,
+      message: "login Company successful",
+      data: response,
     });
   } catch (err) {
     next(err);
@@ -58,7 +103,7 @@ exports.registerPerusahaan = async (req, res, next) => {
 exports.editPerusahaan = async (req, res, next) => {
   try {
     let { email, nama_perusahaan } = req.body;
-    const companyId = req.params.id;
+    const companyId = req.company.id;
     let file = req.file;
     let imageURL;
     const emailValidator = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -85,13 +130,14 @@ exports.editPerusahaan = async (req, res, next) => {
     }
 
     // check image already exist
-    if (!company.gambar_perusahaan) {
+    if (file) {
       const strFile = file.buffer.toString("base64");
       const { url } = await imagekit.upload({
         fileName: Date.now() + path.extname(req.file.originalname),
         file: strFile,
       });
       imageURL = url;
+      company.gambar_perusahaan = imageURL;
     }
 
     // prepare upadate data
