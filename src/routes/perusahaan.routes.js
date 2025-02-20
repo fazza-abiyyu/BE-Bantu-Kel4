@@ -5,7 +5,7 @@ const {
   loginPerusahaan,
 } = require("../controllers/perusahaan.controller");
 const { image } = require("../libs/multer");
-const authMiddleware = require("../middleware/company.middleware");
+const companyMiddleware = require("../middleware/company.middleware");
 
 router.get("/", (req, res, next) => {
   return res.status(200).json({
@@ -14,6 +14,11 @@ router.get("/", (req, res, next) => {
 });
 router.post("/company/register", image.single("image"), registerPerusahaan);
 router.post("/company/login", loginPerusahaan);
-router.put("/company/edit", authMiddleware,image.single("image"), editPerusahaan);
+router.put(
+  "/company/edit",
+  companyMiddleware,
+  image.single("image"),
+  editPerusahaan
+);
 
 module.exports = router;
