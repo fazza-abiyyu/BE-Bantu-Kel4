@@ -1,9 +1,18 @@
-const  prisma  = require('./../config/prisma');
+const prisma = require("./../config/prisma");
 
 class UserModel {
   static createUser(data) {
     return prisma.user.create({
-      data,
+      data: {
+        email: data.email,
+        password: data.password,
+        role: data.role,
+        user_profile: {
+          create: {
+            full_name: data.fullname,
+          },
+        },
+      },
     });
   }
 

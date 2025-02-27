@@ -5,13 +5,15 @@ const JwtService = require("../utils/jwt.service");
 const { addToBlacklist } = require("../utils/blacklistedToken.service");
 
 exports.register = async (req, res) => {
-  const { email, password, role } = req.body;
+  const { email, password ,fullname} = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
+
     await UserModel.createUser({
       email,
       password: hashedPassword,
-      role,
+      fullname,
+      role: "USER",
     });
     res.json({ message: "Pendaftaran akun berhasil" });
   } catch (error) {
@@ -30,7 +32,10 @@ exports.login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Kredensial tidak valid" });
     }
-    const tokens = JwtService.generateToken({ userId: user.id });
+    const tokens = JwtService.generateToken({
+      userId: user.id,
+      role: user.role,
+    });
     await RefreshTokenModel.create(user.id, tokens.refreshToken);
 
     JwtService.sendRefreshToken(res, tokens.refreshToken);
@@ -56,11 +61,9 @@ exports.refreshToken = async (req, res) => {
     const refreshToken = req.cookies["refresh_token"];
 
     if (!refreshToken) {
-      return res
-        .status(400)
-        .json({
-          message: "Tidak ada refresh token yang ditemukan dalam cookie.",
-        });
+      return res.status(400).json({
+        message: "Tidak ada refresh token yang ditemukan dalam cookie.",
+      });
     }
 
     const storedToken = await RefreshTokenModel.findToken(refreshToken);

@@ -121,6 +121,7 @@ CREATE TABLE `Skill` (
 CREATE TABLE `Bidang` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `nama` VARCHAR(191) NOT NULL,
+    `userId` INTEGER NULL,
 
     UNIQUE INDEX `Bidang_nama_key`(`nama`),
     PRIMARY KEY (`id`)
@@ -134,6 +135,7 @@ CREATE TABLE `Jasa` (
     `harga_min` DOUBLE NULL,
     `harga_max` DOUBLE NULL,
     `bidangId` INTEGER NULL,
+    `userId` INTEGER NULL,
 
     UNIQUE INDEX `Jasa_nama_key`(`nama`),
     PRIMARY KEY (`id`)
@@ -165,10 +167,13 @@ CREATE TABLE `Lowongan` (
 CREATE TABLE `Lamaran` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `status` ENUM('pending', 'diterima', 'ditolak') NOT NULL DEFAULT 'pending',
+    `cv_file` VARCHAR(191) NOT NULL,
+    `pengalaman` VARCHAR(191) NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
     `lowonganId` INTEGER NULL,
     `userId` INTEGER NULL,
+    `perusahaanId` INTEGER NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -182,6 +187,42 @@ CREATE TABLE `Pesanan` (
     `userId` INTEGER NOT NULL,
     `freelancerId` INTEGER NOT NULL,
 
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Chat` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `pesan` VARCHAR(191) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `pengirimId` INTEGER NOT NULL,
+    `penerimaId` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Notif` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `jenis` ENUM('PEMBAYARAN', 'STATUS_LAMARAN', 'CHAT') NOT NULL,
+    `deskripsi` VARCHAR(191) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+    `userId` INTEGER NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `ProposalFreelance` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `fileProposal` VARCHAR(191) NOT NULL,
+    `status` ENUM('pending', 'diterima', 'ditolak') NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `userId` INTEGER NOT NULL,
+
+    UNIQUE INDEX `ProposalFreelance_userId_key`(`userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -210,7 +251,13 @@ ALTER TABLE `FreelancerSkill` ADD CONSTRAINT `FreelancerSkill_freelancerId_fkey`
 ALTER TABLE `FreelancerSkill` ADD CONSTRAINT `FreelancerSkill_skillId_fkey` FOREIGN KEY (`skillId`) REFERENCES `Skill`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Bidang` ADD CONSTRAINT `Bidang_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Jasa` ADD CONSTRAINT `Jasa_bidangId_fkey` FOREIGN KEY (`bidangId`) REFERENCES `Bidang`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Jasa` ADD CONSTRAINT `Jasa_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `FreelancerJasa` ADD CONSTRAINT `FreelancerJasa_jasaId_fkey` FOREIGN KEY (`jasaId`) REFERENCES `Jasa`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -228,7 +275,22 @@ ALTER TABLE `Lamaran` ADD CONSTRAINT `Lamaran_lowonganId_fkey` FOREIGN KEY (`low
 ALTER TABLE `Lamaran` ADD CONSTRAINT `Lamaran_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Lamaran` ADD CONSTRAINT `Lamaran_perusahaanId_fkey` FOREIGN KEY (`perusahaanId`) REFERENCES `Perusahaan`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Pesanan` ADD CONSTRAINT `Pesanan_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Pesanan` ADD CONSTRAINT `Pesanan_freelancerId_fkey` FOREIGN KEY (`freelancerId`) REFERENCES `Freelancer`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Chat` ADD CONSTRAINT `Chat_pengirimId_fkey` FOREIGN KEY (`pengirimId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Chat` ADD CONSTRAINT `Chat_penerimaId_fkey` FOREIGN KEY (`penerimaId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Notif` ADD CONSTRAINT `Notif_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `ProposalFreelance` ADD CONSTRAINT `ProposalFreelance_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
