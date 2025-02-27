@@ -12,6 +12,7 @@ const roleMiddleware = (...allowedRoles) => {
 
         try {
             const decodedToken = JwtService.decodeAccessToken(accessToken);
+            console.log(decodedToken)
 
             if (!decodedToken || !allowedRoles.includes(decodedToken.role)) {
                 return res.status(403).json({ message: 'Unauthorized: User does not have access to this resource' });

@@ -82,8 +82,6 @@ exports.editLowongan = async (req, res, next) => {
       },
     });
 
-    console.log(lowongan);
-
     if (!lowongan) {
       throw new CustomError(404, "lowongan is not found");
     }

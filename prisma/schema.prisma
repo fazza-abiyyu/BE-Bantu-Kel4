@@ -44,6 +44,18 @@ enum LamaranStatus {
   ditolak
 }
 
+enum ProposalStatus {
+  pending
+  diterima
+  ditolak
+}
+
+enum NotifJenis {
+  PEMBAYARAN
+  STATUS_LAMARAN
+  CHAT
+}
+
 model Perusahaan {
   id                Int        @id @default(autoincrement())
   email             String     @unique
@@ -55,21 +67,28 @@ model Perusahaan {
   created_at        DateTime   @default(now())
   updated_at        DateTime   @updatedAt
   lowongan          Lowongan[]
+  lamaran           Lamaran[]
 }
 
 model User {
-  id            Int            @id @default(autoincrement())
-  email         String         @unique
+  id            Int                @id @default(autoincrement())
+  email         String             @unique
   password      String?
-  role          Role           @default(USER)
-  created_at    DateTime       @default(now())
-  updated_at    DateTime       @updatedAt
+  role          Role               @default(USER)
+  created_at    DateTime           @default(now())
+  updated_at    DateTime           @updatedAt
   user_profile  UserProfile?
   refresh_token RefreshToken[]
   log           Log[]
   freelancer    Freelancer?
   lamaran       Lamaran[]
   pesanan       Pesanan[]
+  notif         Notif[]
+  proposal      ProposalFreelance?
+  chatPengirim  Chat[]             @relation("ChatPengirim")
+  chatPenerima  Chat[]             @relation("ChatPenerima")
+  Jasa          Jasa[]
+  Bidang        Bidang[]
 }
 
 model UserProfile {
@@ -147,9 +166,11 @@ model Skill {
 }
 
 model Bidang {
-  id   Int    @id @default(autoincrement())
-  nama String @unique
-  jasa Jasa[]
+  id     Int    @id @default(autoincrement())
+  nama   String @unique
+  jasa   Jasa[]
+  user   User?  @relation(fields: [userId], references: [id])
+  userId Int?
 }
 
 model Jasa {
@@ -161,6 +182,8 @@ model Jasa {
   bidang     Bidang?          @relation(fields: [bidangId], references: [id])
   bidangId   Int?
   freelancer FreelancerJasa[]
+  User       User?            @relation(fields: [userId], references: [id])
+  userId     Int?
 }
 
 model FreelancerJasa {
@@ -184,14 +207,18 @@ model Lowongan {
 }
 
 model Lamaran {
-  id         Int           @id @default(autoincrement())
-  status     LamaranStatus @default(pending)
-  created_at DateTime      @default(now())
-  updated_at DateTime      @updatedAt
-  lowongan   Lowongan?     @relation(fields: [lowonganId], references: [id])
-  lowonganId Int?
-  User       User?         @relation(fields: [userId], references: [id])
-  userId     Int?
+  id           Int           @id @default(autoincrement())
+  status       LamaranStatus @default(pending)
+  cv_file      String
+  pengalaman   String?
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  lowongan     Lowongan?     @relation(fields: [lowonganId], references: [id])
+  lowonganId   Int?
+  User         User?         @relation(fields: [userId], references: [id])
+  userId       Int?
+  perusahaan   Perusahaan?   @relation(fields: [perusahaanId], references: [id])
+  perusahaanId Int?
 }
 
 model Pesanan {
@@ -203,4 +230,34 @@ model Pesanan {
   userId       Int
   freelancer   Freelancer    @relation(fields: [freelancerId], references: [id])
   freelancerId Int
+}
+
+model Chat {
+  id         Int      @id @default(autoincrement())
+  pesan      String
+  created_at DateTime @default(now())
+  pengirim   User     @relation("ChatPengirim", fields: [pengirimId], references: [id])
+  pengirimId Int
+  penerima   User     @relation("ChatPenerima", fields: [penerimaId], references: [id])
+  penerimaId Int
+}
+
+model Notif {
+  id         Int        @id @default(autoincrement())
+  jenis      NotifJenis
+  deskripsi  String
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  user       User?      @relation(fields: [userId], references: [id])
+  userId     Int?
+}
+
+model ProposalFreelance {
+  id           Int            @id @default(autoincrement())
+  fileProposal String
+  status       ProposalStatus
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  user         User           @relation(fields: [userId], references: [id])
+  userId       Int            @unique
 }
